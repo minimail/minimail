@@ -43,18 +43,20 @@ impl InMemorySubscriberStore {
 
 #[cfg(test)]
 mod tests {
+    use crate::model::Email;
+
     use super::*;
 
     #[tokio::test]
     async fn create_returns_subscriber() {
         let mut store = InMemorySubscriberStore::default();
         let new_subscriber = NewSubscriber {
-            email: "test@email.com".to_string(),
+            email: Email::from("test@email.com"),
         };
 
         let subscriber = store.create(new_subscriber).await;
 
-        assert_eq!("test@email.com", subscriber.email);
+        assert_eq!("test@email.com", subscriber.email.0);
         assert_eq!(1, subscriber.id);
     }
 
@@ -62,7 +64,7 @@ mod tests {
     async fn delete_removes_subscriber() {
         let mut store = InMemorySubscriberStore::default();
         let new_subscriber = NewSubscriber {
-            email: "test@email.com".to_string(),
+            email: Email::from("test@email.com"),
         };
 
         let subscriber = store.create(new_subscriber).await;
@@ -76,7 +78,7 @@ mod tests {
     async fn all_lists_subscribers() {
         let mut store = InMemorySubscriberStore::default();
         let new_subscriber = NewSubscriber {
-            email: "test@email.com".to_string(),
+            email: Email::from("test@email.com"),
         };
 
         store.create(new_subscriber.clone()).await;
