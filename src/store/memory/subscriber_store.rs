@@ -1,12 +1,9 @@
 use std::collections::HashMap;
 
-use crate::model::{Email, NewSubscriber, Subscriber};
-
-pub trait SubscriberStore {
-    async fn create(&mut self, new_subscriber: NewSubscriber) -> Subscriber;
-    async fn all(&self) -> Vec<Subscriber>;
-    async fn delete(&mut self, id: i32) -> ();
-}
+use crate::{
+    model::{Email, NewSubscriber, Subscriber},
+    store::SubscriberStore,
+};
 
 #[derive(Debug, Default)]
 pub struct InMemorySubscriberStore {
