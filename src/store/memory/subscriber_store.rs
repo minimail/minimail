@@ -7,8 +7,8 @@ use crate::{
 
 #[derive(Debug, Default)]
 pub struct InMemorySubscriberStore {
-    subscribers: HashMap<i32, Subscriber>,
-    next_id: i32,
+    subscribers: HashMap<i64, Subscriber>,
+    next_id: i64,
 }
 
 impl SubscriberStore for InMemorySubscriberStore {
@@ -29,13 +29,13 @@ impl SubscriberStore for InMemorySubscriberStore {
         self.subscribers.values().cloned().collect()
     }
 
-    async fn delete(&mut self, id: i32) -> () {
+    async fn delete(&mut self, id: i64) -> () {
         self.subscribers.remove(&id);
     }
 }
 
 impl InMemorySubscriberStore {
-    fn get_next_id(&mut self) -> i32 {
+    fn get_next_id(&mut self) -> i64 {
         self.next_id += 1;
         self.next_id
     }
