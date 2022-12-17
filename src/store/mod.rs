@@ -1,6 +1,8 @@
 mod memory;
+mod sqlite;
 
 pub use memory::InMemorySubscriberStore;
+pub use sqlite::SqliteSubscriberStore;
 
 use crate::model::NewSubscriber;
 use crate::model::Subscriber;
