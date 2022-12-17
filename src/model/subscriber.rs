@@ -7,6 +7,6 @@ pub struct NewSubscriber {
 
 #[derive(Debug, Clone)]
 pub struct Subscriber {
-    pub id: i32,
+    pub id: i64,
     pub email: Email,
 }
