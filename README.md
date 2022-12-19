@@ -4,7 +4,7 @@ A simple mailing list service.
 
 ### Database
 
-To being, set `DATABASE_URL` env to `sqlite:minimail.db`.
+To begin, set `DATABASE_URL` env to `sqlite:minimail.db`.
 
 The database can be setup by running:
 ```
