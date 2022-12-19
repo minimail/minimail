@@ -1,0 +1,61 @@
+{
+  "db": "SQLite",
+  "43dab620fe99d0d985f661891190b6afc5958d4a4e9383f3db33340d9ce4df3a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "email",
+          "ordinal": 1,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "SELECT * FROM SUBSCRIBERS"
+  },
+  "7471c103ad83ba738f7604952a21cc2763f72080d7021b47c849225a3a0f2e56": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id!",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "email!",
+          "ordinal": 1,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        true,
+        true
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "\n            INSERT INTO subscribers(email)\n            VALUES ($1)\n            ON CONFLICT(email) DO UPDATE SET id = id\n            RETURNING id as 'id!', email as 'email!'\n            "
+  },
+  "ff0d57050ae33f19202e5f7e2981ecd1e889a5eb76c141b988d8ad00516187f2": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "DELETE FROM subscribers WHERE id = $1"
+  }
+}
