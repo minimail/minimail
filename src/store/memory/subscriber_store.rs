@@ -60,48 +60,54 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn create_returns_subscriber() {
+    async fn create_returns_subscriber() -> Result<()> {
         let mut store = InMemorySubscriberStore::default();
         let new_subscriber = NewSubscriber {
             email: Email::from("test@email.com"),
         };
 
-        let subscriber = store.create(new_subscriber).await.unwrap();
+        let subscriber = store.create(new_subscriber).await?;
 
         assert_eq!("test@email.com", subscriber.email.0);
         assert_eq!(1, subscriber.id);
+
+        Ok(())
     }
 
     #[tokio::test]
-    async fn create_does_not_duplicate() {
+    async fn create_does_not_duplicate() -> Result<()> {
         let mut store = InMemorySubscriberStore::default();
         let new_subscriber = NewSubscriber {
             email: Email::from("test@email.com"),
         };
 
-        store.create(new_subscriber.clone()).await.unwrap();
-        store.create(new_subscriber.clone()).await.unwrap();
-        let subscribers = store.all().await.unwrap();
+        store.create(new_subscriber.clone()).await?;
+        store.create(new_subscriber.clone()).await?;
+        let subscribers = store.all().await?;
 
         assert_eq!(1, subscribers.len());
+
+        Ok(())
     }
 
     #[tokio::test]
-    async fn delete_removes_subscriber() {
+    async fn delete_removes_subscriber() -> Result<()> {
         let mut store = InMemorySubscriberStore::default();
         let new_subscriber = NewSubscriber {
             email: Email::from("test@email.com"),
         };
 
-        let subscriber = store.create(new_subscriber).await.unwrap();
-        store.delete(subscriber.id).await.unwrap();
-        let subscribers = store.all().await.unwrap();
+        let subscriber = store.create(new_subscriber).await?;
+        store.delete(subscriber.id).await?;
+        let subscribers = store.all().await?;
 
         assert_eq!(0, subscribers.len());
+
+        Ok(())
     }
 
     #[tokio::test]
-    async fn all_lists_subscribers() {
+    async fn all_lists_subscribers() -> Result<()> {
         let mut store = InMemorySubscriberStore::default();
         let first_subscriber = NewSubscriber {
             email: Email::from("test@email.com"),
@@ -110,10 +116,12 @@ mod tests {
             email: Email::from("another_test@email.com"),
         };
 
-        store.create(first_subscriber).await.unwrap();
-        store.create(second_subscriber).await.unwrap();
-        let subscribers = store.all().await.unwrap();
+        store.create(first_subscriber).await?;
+        store.create(second_subscriber).await?;
+        let subscribers = store.all().await?;
 
         assert_eq!(2, subscribers.len());
+
+        Ok(())
     }
 }

@@ -57,56 +57,57 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn psql_create_returns_subscriber() {
-        let pool = get_pool().await;
-        sqlx::migrate!().run(&pool).await.unwrap();
+    async fn psql_create_returns_subscriber() -> Result<()> {
+        let pool = get_pool().await?;
+        sqlx::migrate!().run(&pool).await?;
 
         let mut store = SqliteSubscriberStore { pool };
         let new_subscriber = NewSubscriber {
             email: Email::from("test@email.com"),
         };
 
-        let subscriber = store.create(new_subscriber).await.unwrap();
+        let subscriber = store.create(new_subscriber).await?;
 
         assert_eq!("test@email.com", subscriber.email.0);
+
+        Ok(())
     }
 
     #[tokio::test]
-    async fn create_does_not_duplicate() {
-        let pool = get_pool().await;
+    async fn create_does_not_duplicate() -> Result<()> {
+        let pool = get_pool().await?;
         let mut store = SqliteSubscriberStore { pool };
         let new_subscriber = NewSubscriber {
             email: Email::from("test@email.com"),
         };
 
-        let initial = store.create(new_subscriber.clone()).await.unwrap();
-        let duplicate = store.create(new_subscriber.clone()).await.unwrap();
+        let initial = store.create(new_subscriber.clone()).await?;
+        let duplicate = store.create(new_subscriber.clone()).await?;
 
         assert_eq!(initial.id, duplicate.id);
+
+        Ok(())
     }
 
     #[tokio::test]
-    async fn delete_removes_subscriber() {
-        let pool = get_pool().await;
+    async fn delete_removes_subscriber() -> Result<()> {
+        let pool = get_pool().await?;
         let mut store = SqliteSubscriberStore { pool };
         let new_subscriber = NewSubscriber {
             email: Email::from("test@email.com"),
         };
 
-        let subscriber = store.create(new_subscriber).await.unwrap();
-        store.delete(subscriber.id).await.unwrap();
+        let subscriber = store.create(new_subscriber).await?;
+        store.delete(subscriber.id).await?;
 
-        assert!(!store
-            .all()
-            .await
-            .unwrap()
-            .iter()
-            .any(|s| s.id == subscriber.id));
+        assert!(!store.all().await?.iter().any(|s| s.id == subscriber.id));
+
+        Ok(())
     }
 
     #[tokio::test]
-    async fn all_lists_subscribers() {
-        let pool = get_pool().await;
+    async fn all_lists_subscribers() -> Result<()> {
+        let pool = get_pool().await?;
         let mut store = SqliteSubscriberStore { pool };
         let first_subscriber = NewSubscriber {
             email: Email::from("test@email.com"),
@@ -115,16 +116,18 @@ mod tests {
             email: Email::from("another_test@email.com"),
         };
 
-        store.create(first_subscriber).await.unwrap();
-        store.create(second_subscriber).await.unwrap();
-        let subscribers = store.all().await.unwrap();
+        store.create(first_subscriber).await?;
+        store.create(second_subscriber).await?;
+        let subscribers = store.all().await?;
 
         assert!(subscribers.len() >= 2);
+
+        Ok(())
     }
 
-    async fn get_pool() -> Pool<Sqlite> {
-        let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
-        sqlx::migrate!().run(&pool).await.unwrap();
-        pool
+    async fn get_pool() -> Result<Pool<Sqlite>> {
+        let pool = SqlitePool::connect("sqlite::memory:").await?;
+        sqlx::migrate!().run(&pool).await?;
+        Ok(pool)
     }
 }
