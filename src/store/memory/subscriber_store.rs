@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anyhow::Result;
 use log::debug;
 
 use crate::{
@@ -14,25 +15,26 @@ pub struct InMemorySubscriberStore {
 }
 
 impl SubscriberStore for InMemorySubscriberStore {
-    async fn create(&mut self, new_subscriber: NewSubscriber) -> Subscriber {
+    async fn create(&mut self, new_subscriber: NewSubscriber) -> Result<Subscriber> {
         let existing_subscriber = self
             .subscribers
             .values()
             .find(|s| s.email == new_subscriber.email);
 
         if let Some(subscriber) = existing_subscriber {
-            subscriber.to_owned()
+            Ok(subscriber.to_owned())
         } else {
-            self.insert_subscriber(new_subscriber.email)
+            Ok(self.insert_subscriber(new_subscriber.email))
         }
     }
 
-    async fn all(&self) -> Vec<Subscriber> {
-        self.subscribers.values().cloned().collect()
+    async fn all(&self) -> Result<Vec<Subscriber>> {
+        Ok(self.subscribers.values().cloned().collect())
     }
 
-    async fn delete(&mut self, id: i64) {
+    async fn delete(&mut self, id: i64) -> Result<()> {
         self.subscribers.remove(&id);
+        Ok(())
     }
 }
 
@@ -64,7 +66,7 @@ mod tests {
             email: Email::from("test@email.com"),
         };
 
-        let subscriber = store.create(new_subscriber).await;
+        let subscriber = store.create(new_subscriber).await.unwrap();
 
         assert_eq!("test@email.com", subscriber.email.0);
         assert_eq!(1, subscriber.id);
@@ -77,9 +79,9 @@ mod tests {
             email: Email::from("test@email.com"),
         };
 
-        store.create(new_subscriber.clone()).await;
-        store.create(new_subscriber.clone()).await;
-        let subscribers = store.all().await;
+        store.create(new_subscriber.clone()).await.unwrap();
+        store.create(new_subscriber.clone()).await.unwrap();
+        let subscribers = store.all().await.unwrap();
 
         assert_eq!(1, subscribers.len());
     }
@@ -91,9 +93,9 @@ mod tests {
             email: Email::from("test@email.com"),
         };
 
-        let subscriber = store.create(new_subscriber).await;
-        store.delete(subscriber.id).await;
-        let subscribers = store.all().await;
+        let subscriber = store.create(new_subscriber).await.unwrap();
+        store.delete(subscriber.id).await.unwrap();
+        let subscribers = store.all().await.unwrap();
 
         assert_eq!(0, subscribers.len());
     }
@@ -108,9 +110,9 @@ mod tests {
             email: Email::from("another_test@email.com"),
         };
 
-        store.create(first_subscriber).await;
-        store.create(second_subscriber).await;
-        let subscribers = store.all().await;
+        store.create(first_subscriber).await.unwrap();
+        store.create(second_subscriber).await.unwrap();
+        let subscribers = store.all().await.unwrap();
 
         assert_eq!(2, subscribers.len());
     }
