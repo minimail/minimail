@@ -24,5 +24,6 @@ RUN cargo build --release --bin minimail
 FROM rustlang/rust:nightly-slim as runtime
 WORKDIR /app
 COPY --from=builder /app/target/release/minimail minimail
+COPY /config/log4rs.yaml config/log4rs.yaml
 
 ENTRYPOINT ["./minimail"]
