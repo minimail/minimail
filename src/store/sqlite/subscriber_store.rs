@@ -10,6 +10,12 @@ pub struct SqliteSubscriberStore {
     pool: SqlitePool,
 }
 
+impl From<SqlitePool> for SqliteSubscriberStore {
+    fn from(pool: SqlitePool) -> Self {
+        Self { pool }
+    }
+}
+
 impl SubscriberStore for SqliteSubscriberStore {
     async fn create(&mut self, new_subscriber: NewSubscriber) -> Result<Subscriber> {
         let row = sqlx::query!(
