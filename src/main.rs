@@ -6,7 +6,7 @@ use logging::setup_logging;
 
 #[tokio::main]
 async fn main() {
-    setup_logging("./config/log4rs.yaml");
+    setup_logging("./config/log4rs.yaml").unwrap();
 
     info!("Booting app");
 
