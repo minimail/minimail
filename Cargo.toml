@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = "0.6"
+axum = { version = "0.6", features = [ "form", "headers" ] }
 anyhow = "1.0"
 log = "0.4"
 log4rs = { version = "1.2", features = [ "background_rotation" ] }
