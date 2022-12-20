@@ -1,3 +1,4 @@
+use anyhow::Result;
 use sqlx::sqlite::SqlitePool;
 
 use crate::{
@@ -10,7 +11,7 @@ pub struct SqliteSubscriberStore {
 }
 
 impl SubscriberStore for SqliteSubscriberStore {
-    async fn create(&mut self, new_subscriber: NewSubscriber) -> Subscriber {
+    async fn create(&mut self, new_subscriber: NewSubscriber) -> Result<Subscriber> {
         let row = sqlx::query!(
             r#"
             INSERT INTO subscribers(email)
@@ -21,33 +22,31 @@ impl SubscriberStore for SqliteSubscriberStore {
             new_subscriber.email.0,
         )
         .fetch_one(&self.pool)
-        .await
-        .unwrap();
+        .await?;
 
-        Subscriber {
+        Ok(Subscriber {
             id: row.id,
             email: Email::from(row.email),
-        }
+        })
     }
 
-    async fn all(&self) -> Vec<Subscriber> {
-        sqlx::query!("SELECT * FROM SUBSCRIBERS")
+    async fn all(&self) -> Result<Vec<Subscriber>> {
+        Ok(sqlx::query!("SELECT * FROM SUBSCRIBERS")
             .fetch_all(&self.pool)
-            .await
-            .unwrap()
+            .await?
             .into_iter()
             .map(|row| Subscriber {
                 id: row.id,
                 email: Email::from(row.email),
             })
-            .collect()
+            .collect())
     }
 
-    async fn delete(&mut self, id: i64) {
+    async fn delete(&mut self, id: i64) -> Result<()> {
         sqlx::query!("DELETE FROM subscribers WHERE id = $1", id)
             .execute(&self.pool)
-            .await
-            .unwrap();
+            .await?;
+        Ok(())
     }
 }
 
@@ -67,7 +66,7 @@ mod tests {
             email: Email::from("test@email.com"),
         };
 
-        let subscriber = store.create(new_subscriber).await;
+        let subscriber = store.create(new_subscriber).await.unwrap();
 
         assert_eq!("test@email.com", subscriber.email.0);
     }
@@ -80,8 +79,8 @@ mod tests {
             email: Email::from("test@email.com"),
         };
 
-        let initial = store.create(new_subscriber.clone()).await;
-        let duplicate = store.create(new_subscriber.clone()).await;
+        let initial = store.create(new_subscriber.clone()).await.unwrap();
+        let duplicate = store.create(new_subscriber.clone()).await.unwrap();
 
         assert_eq!(initial.id, duplicate.id);
     }
@@ -94,10 +93,15 @@ mod tests {
             email: Email::from("test@email.com"),
         };
 
-        let subscriber = store.create(new_subscriber).await;
-        store.delete(subscriber.id).await;
+        let subscriber = store.create(new_subscriber).await.unwrap();
+        store.delete(subscriber.id).await.unwrap();
 
-        assert!(!store.all().await.iter().any(|s| s.id == subscriber.id));
+        assert!(!store
+            .all()
+            .await
+            .unwrap()
+            .iter()
+            .any(|s| s.id == subscriber.id));
     }
 
     #[tokio::test]
@@ -111,9 +115,9 @@ mod tests {
             email: Email::from("another_test@email.com"),
         };
 
-        store.create(first_subscriber).await;
-        store.create(second_subscriber).await;
-        let subscribers = store.all().await;
+        store.create(first_subscriber).await.unwrap();
+        store.create(second_subscriber).await.unwrap();
+        let subscribers = store.all().await.unwrap();
 
         assert!(subscribers.len() >= 2);
     }
