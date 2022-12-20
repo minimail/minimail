@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use log::debug;
+
 use crate::{
     model::{Email, NewSubscriber, Subscriber},
     store::SubscriberStore,
@@ -29,7 +31,7 @@ impl SubscriberStore for InMemorySubscriberStore {
         self.subscribers.values().cloned().collect()
     }
 
-    async fn delete(&mut self, id: i64) -> () {
+    async fn delete(&mut self, id: i64) {
         self.subscribers.remove(&id);
     }
 }
@@ -44,6 +46,7 @@ impl InMemorySubscriberStore {
         let id = self.get_next_id();
         let subscriber = Subscriber { id, email };
         self.subscribers.insert(id, subscriber.clone());
+        debug!("subscriber created");
         subscriber
     }
 }
