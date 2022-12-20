@@ -43,7 +43,7 @@ impl SubscriberStore for SqliteSubscriberStore {
             .collect()
     }
 
-    async fn delete(&mut self, id: i64) -> () {
+    async fn delete(&mut self, id: i64) {
         sqlx::query!("DELETE FROM subscribers WHERE id = $1", id)
             .execute(&self.pool)
             .await

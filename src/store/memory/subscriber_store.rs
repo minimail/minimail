@@ -31,7 +31,7 @@ impl SubscriberStore for InMemorySubscriberStore {
         self.subscribers.values().cloned().collect()
     }
 
-    async fn delete(&mut self, id: i64) -> () {
+    async fn delete(&mut self, id: i64) {
         self.subscribers.remove(&id);
     }
 }
