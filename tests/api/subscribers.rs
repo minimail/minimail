@@ -15,7 +15,7 @@ async fn spawn_app() -> TestApp {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
     // We retrieve the port assigned to us by the OS
     let port = listener.local_addr().unwrap().port();
-    let address = format!("http://127.0.0.1:{}", port);
+    let address = format!("http://127.0.0.1:{port}");
 
     let pool = setup_sqlite("sqlite::memory:").await;
 
@@ -88,6 +88,7 @@ async fn subscribe_lists_subscribers() {
     let client = reqwest::Client::new();
     let first_subscriber = "email=user%40email.com";
     let second_subscriber = "email=admin%40email.com";
+    let token = std::env::var("ADMIN_TOKEN").expect("No admin token set.");
 
     // Act
     client
@@ -108,6 +109,7 @@ async fn subscribe_lists_subscribers() {
         .expect("Failed to execute request.");
     let subscribers = client
         .get(&format!("{}/subscriber", &app.address))
+        .bearer_auth(token)
         .send()
         .await
         .expect("Failed to execute request.")
@@ -117,4 +119,43 @@ async fn subscribe_lists_subscribers() {
 
     // Assert
     assert_eq!(subscribers, "user@email.com\nadmin@email.com");
+}
+
+#[tokio::test]
+async fn subscribe_without_auth_asks_for_it() {
+    // Arrange
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+
+    // Act
+    let response = client
+        .get(&format!("{}/subscriber", &app.address))
+        .send()
+        .await
+        .expect("Failed to execute request.");
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 400);
+    let response_text = response.text().await.expect("No text in body");
+    assert_eq!(response_text, "Header of type `authorization` was missing");
+}
+
+#[tokio::test]
+async fn subscribe_with_invalid_auth_fails() {
+    // Arrange
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+
+    // Act
+    let response = client
+        .get(&format!("{}/subscriber", &app.address))
+        .bearer_auth("BAD_TOKEN")
+        .send()
+        .await
+        .expect("Failed to execute request.");
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 401);
+    let response_text = response.text().await.expect("No text in body");
+    assert_eq!(response_text, "Not authorized");
 }
