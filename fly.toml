@@ -6,12 +6,16 @@ kill_timeout = 5
 processes = []
 
 [env]
-  DATABASE_URL="sqlite::memory:"
+  DATABASE_URL="sqlite://data/minimail.db"
   SQLX_OFFLINE="true"
 
 [experimental]
   allowed_public_ports = []
   auto_rollback = true
+
+[mounts]
+source="minimail_data"
+destination="/data"
 
 [[services]]
   http_checks = []
