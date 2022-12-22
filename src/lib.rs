@@ -1,6 +1,7 @@
 #![allow(incomplete_features)]
 #![feature(async_fn_in_trait)]
 
+pub mod auth;
 pub mod db;
 pub mod logging;
 mod model;
