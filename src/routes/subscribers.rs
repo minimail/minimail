@@ -1,8 +1,8 @@
-use axum::{extract::State, headers::Origin, response::Redirect, Form, TypedHeader};
-use minimail::{
+use crate::{
     model::NewSubscriber,
     store::{SqliteSubscriberStore, SubscriberStore},
 };
+use axum::{extract::State, headers::Origin, response::Redirect, Form, TypedHeader};
 use sqlx::SqlitePool;
 
 pub async fn subscriber(State(pool): State<SqlitePool>) -> String {
@@ -27,5 +27,5 @@ pub async fn create_subscriber(
 ) -> Redirect {
     let mut store = SqliteSubscriberStore::from(pool);
     store.create(new_subscriber).await.unwrap();
-    Redirect::temporary(&origin.to_string())
+    Redirect::to(&origin.to_string())
 }
