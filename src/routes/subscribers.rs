@@ -13,7 +13,7 @@ pub async fn subscriber(State(pool): State<SqlitePool>) -> String {
         .await
         .ok()
         .into_iter()
-        .flat_map(|it| it)
+        .flatten()
         .into_iter()
         .map(|sub| sub.email.0)
         .collect();
