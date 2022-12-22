@@ -27,5 +27,5 @@ pub async fn create_subscriber(
 ) -> Redirect {
     let mut store = SqliteSubscriberStore::from(pool);
     store.create(new_subscriber).await.unwrap();
-    Redirect::temporary(&origin.to_string())
+    Redirect::to(&origin.to_string())
 }
