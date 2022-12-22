@@ -48,6 +48,30 @@
     },
     "query": "\n            INSERT INTO subscribers(email)\n            VALUES ($1)\n            ON CONFLICT(email) DO UPDATE SET id = id\n            RETURNING id as 'id!', email as 'email!'\n            "
   },
+  "f2bada5ca417187bedaca9b21d65280eed94ee2b57943443afa90a759492162a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "email",
+          "ordinal": 1,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "SELECT * FROM subscribers"
+  },
   "ff0d57050ae33f19202e5f7e2981ecd1e889a5eb76c141b988d8ad00516187f2": {
     "describe": {
       "columns": [],
