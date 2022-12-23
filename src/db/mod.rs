@@ -1,3 +1,3 @@
 mod setup;
 
-pub use setup::setup_sqlite;
+pub use setup::setup_db;

@@ -12,7 +12,7 @@ log = "0.4"
 log4rs = { version = "1.2", features = [ "background_rotation" ] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "sqlite", "offline", "migrate" ] }
+sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "offline", "migrate", "postgres" ] }
 tokio = { version = "1.0", features = ["full"] }
 
 [dev-dependencies]

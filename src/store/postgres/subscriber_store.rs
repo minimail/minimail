@@ -1,29 +1,29 @@
 use anyhow::Result;
-use sqlx::sqlite::SqlitePool;
+use sqlx::{PgPool, Pool, Postgres};
 
 use crate::{
     model::{Email, NewSubscriber, Subscriber},
     store::SubscriberStore,
 };
 
-pub struct SqliteSubscriberStore {
-    pool: SqlitePool,
+pub struct PsqlSubscriberStore {
+    pool: Pool<Postgres>,
 }
 
-impl From<SqlitePool> for SqliteSubscriberStore {
-    fn from(pool: SqlitePool) -> Self {
+impl From<PgPool> for PsqlSubscriberStore {
+    fn from(pool: PgPool) -> Self {
         Self { pool }
     }
 }
 
-impl SubscriberStore for SqliteSubscriberStore {
+impl SubscriberStore for PsqlSubscriberStore {
     async fn create(&mut self, new_subscriber: NewSubscriber) -> Result<Subscriber> {
         let row = sqlx::query!(
             r#"
             INSERT INTO subscribers(email)
             VALUES ($1)
-            ON CONFLICT(email) DO UPDATE SET id = id
-            RETURNING id as 'id!', email as 'email!'
+            ON CONFLICT (email) DO UPDATE SET email = EXCLUDED.email
+            RETURNING *
             "#,
             new_subscriber.email.0,
         )
@@ -42,13 +42,13 @@ impl SubscriberStore for SqliteSubscriberStore {
             .await?
             .into_iter()
             .map(|row| Subscriber {
-                id: row.id,
+                id: row.id.into(),
                 email: Email::from(row.email),
             })
             .collect())
     }
 
-    async fn delete(&mut self, id: i64) -> Result<()> {
+    async fn delete(&mut self, id: i32) -> Result<()> {
         sqlx::query!("DELETE FROM subscribers WHERE id = $1", id)
             .execute(&self.pool)
             .await?;
@@ -58,16 +58,11 @@ impl SubscriberStore for SqliteSubscriberStore {
 
 #[cfg(test)]
 mod tests {
-    use sqlx::{Pool, Sqlite};
-
     use super::*;
 
-    #[tokio::test]
-    async fn psql_create_returns_subscriber() -> Result<()> {
-        let pool = get_pool().await?;
-        sqlx::migrate!().run(&pool).await?;
-
-        let mut store = SqliteSubscriberStore { pool };
+    #[sqlx::test]
+    async fn psql_create_returns_subscriber(pool: PgPool) -> Result<()> {
+        let mut store = PsqlSubscriberStore { pool };
         let new_subscriber = NewSubscriber {
             email: Email::from("test@email.com"),
         };
@@ -79,10 +74,9 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn create_does_not_duplicate() -> Result<()> {
-        let pool = get_pool().await?;
-        let mut store = SqliteSubscriberStore { pool };
+    #[sqlx::test]
+    async fn create_does_not_duplicate(pool: PgPool) -> Result<()> {
+        let mut store = PsqlSubscriberStore { pool };
         let new_subscriber = NewSubscriber {
             email: Email::from("test@email.com"),
         };
@@ -95,10 +89,9 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn delete_removes_subscriber() -> Result<()> {
-        let pool = get_pool().await?;
-        let mut store = SqliteSubscriberStore { pool };
+    #[sqlx::test]
+    async fn delete_removes_subscriber(pool: PgPool) -> Result<()> {
+        let mut store = PsqlSubscriberStore { pool };
         let new_subscriber = NewSubscriber {
             email: Email::from("test@email.com"),
         };
@@ -111,10 +104,9 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn all_lists_subscribers() -> Result<()> {
-        let pool = get_pool().await?;
-        let mut store = SqliteSubscriberStore { pool };
+    #[sqlx::test]
+    async fn all_lists_subscribers(pool: PgPool) -> Result<()> {
+        let mut store = PsqlSubscriberStore { pool };
         let first_subscriber = NewSubscriber {
             email: Email::from("test@email.com"),
         };
@@ -126,14 +118,8 @@ mod tests {
         store.create(second_subscriber).await?;
         let subscribers = store.all().await?;
 
-        assert!(subscribers.len() >= 2);
+        assert!(subscribers.len() == 2);
 
         Ok(())
-    }
-
-    async fn get_pool() -> Result<Pool<Sqlite>> {
-        let pool = SqlitePool::connect("sqlite::memory:").await?;
-        sqlx::migrate!().run(&pool).await?;
-        Ok(pool)
     }
 }
