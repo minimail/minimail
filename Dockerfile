@@ -1,6 +1,8 @@
 # Build with rust nightly
 FROM rustlang/rust:nightly as chef
 
+ENV SQLX_OFFLINE=true
+
 WORKDIR /app
 
 # Install cargo-chef so we can use it for caching
