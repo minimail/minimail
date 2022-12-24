@@ -42,7 +42,7 @@ impl SubscriberStore for PsqlSubscriberStore {
             .await?
             .into_iter()
             .map(|row| Subscriber {
-                id: row.id.into(),
+                id: row.id,
                 email: Email::from(row.email),
             })
             .collect())
