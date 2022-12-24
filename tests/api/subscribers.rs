@@ -1,33 +1,30 @@
 use std::net::TcpListener;
 
 use reqwest::redirect::Policy;
-use sqlx::{Pool, Sqlite};
+use sqlx::{PgPool, Pool, Postgres};
 
-use minimail::db::setup_sqlite;
 use minimail::startup::run;
 
 pub struct TestApp {
     pub address: String,
-    pub pool: Pool<Sqlite>,
+    pub pool: Pool<Postgres>,
 }
 
-async fn spawn_app() -> TestApp {
+async fn spawn_app(pool: PgPool) -> TestApp {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
     // We retrieve the port assigned to us by the OS
     let port = listener.local_addr().unwrap().port();
     let address = format!("http://127.0.0.1:{port}");
-
-    let pool = setup_sqlite("sqlite::memory:").await;
 
     let server = run(listener, pool.clone());
     let _ = tokio::spawn(server);
     TestApp { address, pool }
 }
 
-#[tokio::test]
-async fn subscribe_redirects_to_origin() {
+#[sqlx::test]
+async fn subscribe_redirects_to_origin(pool: PgPool) {
     // Arrange
-    let app = spawn_app().await;
+    let app = spawn_app(pool).await;
     let client = reqwest::ClientBuilder::new()
         .redirect(Policy::none())
         .build()
@@ -55,10 +52,10 @@ async fn subscribe_redirects_to_origin() {
     );
 }
 
-#[tokio::test]
-async fn subscribe_persists_email() {
+#[sqlx::test]
+async fn subscribe_persists_email(pool: PgPool) {
     // Arrange
-    let app = spawn_app().await;
+    let app = spawn_app(pool).await;
     let client = reqwest::Client::new();
     let body = "email=user%40email.com";
 
@@ -81,10 +78,10 @@ async fn subscribe_persists_email() {
     assert_eq!(saved.email, "user@email.com");
 }
 
-#[tokio::test]
-async fn subscribe_lists_subscribers() {
+#[sqlx::test]
+async fn subscribe_lists_subscribers(pool: PgPool) {
     // Arrange
-    let app = spawn_app().await;
+    let app = spawn_app(pool).await;
     let client = reqwest::Client::new();
     let first_subscriber = "email=user%40email.com";
     let second_subscriber = "email=admin%40email.com";
@@ -121,10 +118,10 @@ async fn subscribe_lists_subscribers() {
     assert_eq!(subscribers, "user@email.com\nadmin@email.com");
 }
 
-#[tokio::test]
-async fn subscribe_without_auth_asks_for_it() {
+#[sqlx::test]
+async fn subscribe_without_auth_asks_for_it(pool: PgPool) {
     // Arrange
-    let app = spawn_app().await;
+    let app = spawn_app(pool).await;
     let client = reqwest::Client::new();
 
     // Act
@@ -140,10 +137,10 @@ async fn subscribe_without_auth_asks_for_it() {
     assert_eq!(response_text, "Header of type `authorization` was missing");
 }
 
-#[tokio::test]
-async fn subscribe_with_invalid_auth_fails() {
+#[sqlx::test]
+async fn subscribe_with_invalid_auth_fails(pool: PgPool) {
     // Arrange
-    let app = spawn_app().await;
+    let app = spawn_app(pool).await;
     let client = reqwest::Client::new();
 
     // Act

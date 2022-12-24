@@ -1,8 +1,8 @@
 mod memory;
-mod sqlite;
+mod postgres;
 
 pub use memory::InMemorySubscriberStore;
-pub use sqlite::SqliteSubscriberStore;
+pub use postgres::PsqlSubscriberStore;
 
 use anyhow::Result;
 
@@ -12,5 +12,5 @@ use crate::model::Subscriber;
 pub trait SubscriberStore {
     async fn create(&mut self, new_subscriber: NewSubscriber) -> Result<Subscriber>;
     async fn all(&self) -> Result<Vec<Subscriber>>;
-    async fn delete(&mut self, id: i64) -> Result<()>;
+    async fn delete(&mut self, id: i32) -> Result<()>;
 }

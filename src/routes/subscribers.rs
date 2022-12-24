@@ -1,7 +1,7 @@
 use crate::{
     auth::get_admin_token,
     model::NewSubscriber,
-    store::{SqliteSubscriberStore, SubscriberStore},
+    store::{PsqlSubscriberStore, SubscriberStore},
 };
 use axum::{
     extract::State,
@@ -11,10 +11,10 @@ use axum::{
     Form, TypedHeader,
 };
 use log::debug;
-use sqlx::SqlitePool;
+use sqlx::PgPool;
 
 pub async fn subscriber(
-    State(pool): State<SqlitePool>,
+    State(pool): State<PgPool>,
     TypedHeader(authorization): TypedHeader<Authorization<Bearer>>,
 ) -> Result<String, (StatusCode, String)> {
     debug!("{authorization:?}");
@@ -27,7 +27,7 @@ pub async fn subscriber(
         return Err((StatusCode::UNAUTHORIZED, "Not authorized".to_string()));
     }
 
-    let store = SqliteSubscriberStore::from(pool);
+    let store = PsqlSubscriberStore::from(pool);
     let subscribers = match store.all().await {
         Ok(it) => it,
         Err(e) => return Err((StatusCode::BAD_REQUEST, e.to_string())),
@@ -38,11 +38,11 @@ pub async fn subscriber(
 }
 
 pub async fn create_subscriber(
-    State(pool): State<SqlitePool>,
+    State(pool): State<PgPool>,
     TypedHeader(origin): TypedHeader<Origin>,
     Form(new_subscriber): Form<NewSubscriber>,
 ) -> Redirect {
-    let mut store = SqliteSubscriberStore::from(pool);
+    let mut store = PsqlSubscriberStore::from(pool);
     store.create(new_subscriber).await.unwrap();
     Redirect::to(&origin.to_string())
 }

@@ -3,7 +3,7 @@ use std::net::TcpListener;
 use anyhow::Result;
 use log::info;
 
-use minimail::db::setup_sqlite;
+use minimail::db::setup_db;
 use minimail::logging::setup_logging;
 use minimail::startup::run;
 
@@ -18,7 +18,7 @@ async fn main() -> Result<()> {
     info!("Booting app");
 
     let db_url = database_url();
-    let pool = setup_sqlite(&db_url).await;
+    let pool = setup_db(&db_url).await;
     let listener = TcpListener::bind("0.0.0.0:3000")?;
 
     run(listener, pool).await?;

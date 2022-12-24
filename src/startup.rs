@@ -4,10 +4,10 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use sqlx::{Pool, Sqlite};
+use sqlx::{Pool, Postgres};
 use std::net::TcpListener;
 
-pub async fn run(listener: TcpListener, pool: Pool<Sqlite>) -> Result<()> {
+pub async fn run(listener: TcpListener, pool: Pool<Postgres>) -> Result<()> {
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/subscriber", get(routes::subscriber))
