@@ -8,9 +8,12 @@ edition = "2021"
 [dependencies]
 axum = { version = "0.6", features = [ "form", "headers" ] }
 anyhow = "1.0"
+config = { version = "0.13", default-features = false, features = ["yaml"] }
 log = "0.4"
 log4rs = { version = "1.2", features = [ "background_rotation" ] }
+secrecy = { version = "0.8", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
+serde-aux = "3"
 serde_json = "1.0"
 sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "offline", "migrate", "postgres" ] }
 tokio = { version = "1.0", features = ["full"] }
