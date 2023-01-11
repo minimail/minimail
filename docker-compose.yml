@@ -1,12 +1,30 @@
 version: '3'
 
 services:
+  database:
+    image: postgres:14.5
+    volumes:
+      - ./data/database:/var/lib/postgresql/data
+    networks:
+      - mynetwork
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'postgres'
+      POSTGRES_DB: 'minimail'
+
   web:
     build: .
     ports:
       - 3000:3000
     networks:
       - mynetwork
+    depends_on:
+      - database
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@database/minimail"
+      ADMIN_TOKEN: "admin"
 
 networks:
   mynetwork:
