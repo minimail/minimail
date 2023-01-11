@@ -25,7 +25,7 @@ RUN cargo build --release --bin minimail
 # Use the slim nightly rust version as our runtime.
 FROM rustlang/rust:nightly-slim as runtime
 WORKDIR /app
-COPY --from=builder /app/target/release/minimail minimail
 COPY /config config
+COPY --from=builder /app/target/release/minimail minimail
 
 ENTRYPOINT ["./minimail"]
