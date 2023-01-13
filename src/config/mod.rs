@@ -3,6 +3,7 @@ mod application_settings;
 mod database_settings;
 mod environment;
 mod settings;
+mod subscribed_settings;
 
 use config::ConfigError;
 
@@ -11,6 +12,7 @@ pub use application_settings::ApplicationSettings;
 pub use database_settings::DatabaseSettings;
 use environment::Environment;
 pub use settings::Settings;
+pub use subscribed_settings::SubscribedSettings;
 
 pub fn get_configuration() -> Result<Settings, ConfigError> {
     let base_path = std::env::current_dir().expect("Failed to determine the current directory");
