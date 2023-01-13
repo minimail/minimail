@@ -3,28 +3,34 @@ use std::net::TcpListener;
 use reqwest::redirect::Policy;
 use sqlx::{PgPool, Pool, Postgres};
 
-use minimail::startup::run;
+use minimail::{config::AdminSettings, startup::run};
 
 pub struct TestApp {
     pub address: String,
     pub pool: Pool<Postgres>,
 }
 
-async fn spawn_app(pool: PgPool) -> TestApp {
+async fn spawn_app(pool: PgPool, admin: AdminSettings) -> TestApp {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
     // We retrieve the port assigned to us by the OS
     let port = listener.local_addr().unwrap().port();
     let address = format!("http://127.0.0.1:{port}");
 
-    let server = run(listener, pool.clone());
-    let _ = tokio::spawn(server);
+    let server = run(listener, pool.clone(), admin);
+    tokio::spawn(server);
     TestApp { address, pool }
 }
 
 #[sqlx::test]
 async fn subscribe_redirects_to_origin(pool: PgPool) {
     // Arrange
-    let app = spawn_app(pool).await;
+    let app = spawn_app(
+        pool,
+        AdminSettings {
+            token: "admin".to_string(),
+        },
+    )
+    .await;
     let client = reqwest::ClientBuilder::new()
         .redirect(Policy::none())
         .build()
@@ -55,7 +61,13 @@ async fn subscribe_redirects_to_origin(pool: PgPool) {
 #[sqlx::test]
 async fn subscribe_persists_email(pool: PgPool) {
     // Arrange
-    let app = spawn_app(pool).await;
+    let app = spawn_app(
+        pool,
+        AdminSettings {
+            token: "admin".to_string(),
+        },
+    )
+    .await;
     let client = reqwest::Client::new();
     let body = "email=user%40email.com";
 
@@ -81,11 +93,16 @@ async fn subscribe_persists_email(pool: PgPool) {
 #[sqlx::test]
 async fn subscribe_lists_subscribers(pool: PgPool) {
     // Arrange
-    let app = spawn_app(pool).await;
+    let app = spawn_app(
+        pool,
+        AdminSettings {
+            token: "admin".to_string(),
+        },
+    )
+    .await;
     let client = reqwest::Client::new();
     let first_subscriber = "email=user%40email.com";
     let second_subscriber = "email=admin%40email.com";
-    let token = std::env::var("ADMIN_TOKEN").expect("No admin token set.");
 
     // Act
     client
@@ -106,7 +123,7 @@ async fn subscribe_lists_subscribers(pool: PgPool) {
         .expect("Failed to execute request.");
     let subscribers = client
         .get(&format!("{}/api/subscriber", &app.address))
-        .bearer_auth(token)
+        .bearer_auth("admin")
         .send()
         .await
         .expect("Failed to execute request.")
@@ -121,7 +138,13 @@ async fn subscribe_lists_subscribers(pool: PgPool) {
 #[sqlx::test]
 async fn subscribe_without_auth_asks_for_it(pool: PgPool) {
     // Arrange
-    let app = spawn_app(pool).await;
+    let app = spawn_app(
+        pool,
+        AdminSettings {
+            token: "admin".to_string(),
+        },
+    )
+    .await;
     let client = reqwest::Client::new();
 
     // Act
@@ -140,7 +163,13 @@ async fn subscribe_without_auth_asks_for_it(pool: PgPool) {
 #[sqlx::test]
 async fn subscribe_with_invalid_auth_fails(pool: PgPool) {
     // Arrange
-    let app = spawn_app(pool).await;
+    let app = spawn_app(
+        pool,
+        AdminSettings {
+            token: "admin".to_string(),
+        },
+    )
+    .await;
     let client = reqwest::Client::new();
 
     // Act

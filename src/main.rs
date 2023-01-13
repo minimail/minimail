@@ -8,10 +8,6 @@ use minimail::db::setup_db;
 use minimail::logging::setup_logging;
 use minimail::startup::run;
 
-fn database_url() -> String {
-    std::env::var("DATABASE_URL").unwrap()
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     setup_logging("./config/log4rs.yaml")?;
@@ -19,9 +15,7 @@ async fn main() -> Result<()> {
     info!("Booting app");
 
     let configuration = get_configuration().expect("Failed to read configuration.");
-
-    let db_url = database_url();
-    let pool = setup_db(&db_url).await;
+    let pool = setup_db(&configuration.database.url).await;
 
     let listener = TcpListener::bind(format!(
         "{}:{}",
@@ -29,7 +23,7 @@ async fn main() -> Result<()> {
     ))
     .expect("Failed to setup TCP listener.");
 
-    run(listener, pool).await?;
+    run(listener, pool, configuration.admin).await?;
 
     Ok(())
 }
