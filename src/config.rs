@@ -2,16 +2,28 @@ use config::ConfigError;
 
 use serde_aux::field_attributes::deserialize_number_from_string;
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(serde::Deserialize, Clone, Debug)]
 pub struct Settings {
     pub application: ApplicationSettings,
+    pub database: DatabaseSettings,
+    pub admin: AdminSettings,
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(serde::Deserialize, Clone, Debug, Default)]
 pub struct ApplicationSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
     pub host: String,
+}
+
+#[derive(serde::Deserialize, Clone, Debug, Default)]
+pub struct DatabaseSettings {
+    pub url: String,
+}
+
+#[derive(serde::Deserialize, Clone, Debug, Default)]
+pub struct AdminSettings {
+    pub token: String,
 }
 
 pub fn get_configuration() -> Result<Settings, ConfigError> {
@@ -35,7 +47,7 @@ pub fn get_configuration() -> Result<Settings, ConfigError> {
         .add_source(config::Environment::default().separator("_"))
         .build()?;
 
-    settings.try_deserialize::<Settings>()
+    settings.try_deserialize()
 }
 
 pub enum Environment {

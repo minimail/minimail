@@ -1,4 +1,5 @@
 application:
   port: 3000
   host: 0.0.0.0
-  admin_token: password
+admin:
+  token: password

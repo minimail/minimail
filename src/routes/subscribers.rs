@@ -1,5 +1,5 @@
 use crate::{
-    auth::get_admin_token,
+    data::ApplicationData,
     model::NewSubscriber,
     store::{PsqlSubscriberStore, SubscriberStore},
 };
@@ -11,23 +11,20 @@ use axum::{
     Form, TypedHeader,
 };
 use log::debug;
-use sqlx::PgPool;
 
 pub async fn subscriber(
-    State(pool): State<PgPool>,
+    State(data): State<ApplicationData>,
     TypedHeader(authorization): TypedHeader<Authorization<Bearer>>,
 ) -> Result<String, (StatusCode, String)> {
     debug!("{authorization:?}");
 
-    let authorized = get_admin_token()
-        .map(|token| token.eq(authorization.0.token()))
-        .unwrap_or(true);
+    let authorized = data.admin.token.eq(authorization.0.token());
 
     if !authorized {
         return Err((StatusCode::UNAUTHORIZED, "Not authorized".to_string()));
     }
 
-    let store = PsqlSubscriberStore::from(pool);
+    let store = PsqlSubscriberStore::from(data.pool);
     let subscribers = match store.all().await {
         Ok(it) => it,
         Err(e) => return Err((StatusCode::BAD_REQUEST, e.to_string())),
@@ -38,11 +35,11 @@ pub async fn subscriber(
 }
 
 pub async fn create_subscriber(
-    State(pool): State<PgPool>,
+    State(data): State<ApplicationData>,
     TypedHeader(origin): TypedHeader<Origin>,
     Form(new_subscriber): Form<NewSubscriber>,
 ) -> Redirect {
-    let mut store = PsqlSubscriberStore::from(pool);
+    let mut store = PsqlSubscriberStore::from(data.pool);
     store.create(new_subscriber).await.unwrap();
     Redirect::to(&origin.to_string())
 }
