@@ -3,20 +3,23 @@ use std::net::TcpListener;
 use reqwest::redirect::Policy;
 use sqlx::{PgPool, Pool, Postgres};
 
-use minimail::{config::AdminSettings, startup::run};
+use minimail::{
+    config::{AdminSettings, SubscribedSettings},
+    startup::run,
+};
 
 pub struct TestApp {
     pub address: String,
     pub pool: Pool<Postgres>,
 }
 
-async fn spawn_app(pool: PgPool, admin: AdminSettings) -> TestApp {
+async fn spawn_app(pool: PgPool, admin: AdminSettings, redirect: SubscribedSettings) -> TestApp {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
     // We retrieve the port assigned to us by the OS
     let port = listener.local_addr().unwrap().port();
     let address = format!("http://127.0.0.1:{port}");
 
-    let server = run(listener, pool.clone(), admin);
+    let server = run(listener, pool.clone(), admin, redirect);
     tokio::spawn(server);
     TestApp { address, pool }
 }
@@ -29,6 +32,7 @@ async fn subscribe_redirects_to_origin(pool: PgPool) {
         AdminSettings {
             token: "admin".to_string(),
         },
+        SubscribedSettings::default(),
     )
     .await;
     let client = reqwest::ClientBuilder::new()
@@ -59,6 +63,46 @@ async fn subscribe_redirects_to_origin(pool: PgPool) {
 }
 
 #[sqlx::test]
+async fn subscribe_redirects_to_configured_redirect(pool: PgPool) {
+    // Arrange
+    let app = spawn_app(
+        pool,
+        AdminSettings {
+            token: "admin".to_string(),
+        },
+        SubscribedSettings {
+            redirect: Some("http://example.com".to_string()),
+        },
+    )
+    .await;
+    let client = reqwest::ClientBuilder::new()
+        .redirect(Policy::none())
+        .build()
+        .unwrap();
+    let body = "email=user%40email.com";
+
+    // Act
+    let response = client
+        .post(&format!("{}/api/subscriber", &app.address))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .header("origin", &app.address)
+        .body(body)
+        .send()
+        .await
+        .expect("Failed to execute request.");
+
+    // Assert
+    assert_eq!(&303, &response.status().as_u16());
+    assert_eq!(
+        "http://example.com",
+        response
+            .headers()
+            .get("Location")
+            .expect("Location header is missing")
+    );
+}
+
+#[sqlx::test]
 async fn subscribe_persists_email(pool: PgPool) {
     // Arrange
     let app = spawn_app(
@@ -66,6 +110,7 @@ async fn subscribe_persists_email(pool: PgPool) {
         AdminSettings {
             token: "admin".to_string(),
         },
+        SubscribedSettings::default(),
     )
     .await;
     let client = reqwest::Client::new();
@@ -98,6 +143,7 @@ async fn subscribe_lists_subscribers(pool: PgPool) {
         AdminSettings {
             token: "admin".to_string(),
         },
+        SubscribedSettings::default(),
     )
     .await;
     let client = reqwest::Client::new();
@@ -143,6 +189,7 @@ async fn subscribe_without_auth_asks_for_it(pool: PgPool) {
         AdminSettings {
             token: "admin".to_string(),
         },
+        SubscribedSettings::default(),
     )
     .await;
     let client = reqwest::Client::new();
@@ -168,6 +215,7 @@ async fn subscribe_with_invalid_auth_fails(pool: PgPool) {
         AdminSettings {
             token: "admin".to_string(),
         },
+        SubscribedSettings::default(),
     )
     .await;
     let client = reqwest::Client::new();

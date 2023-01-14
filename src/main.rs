@@ -23,7 +23,13 @@ async fn main() -> Result<()> {
     ))
     .expect("Failed to setup TCP listener.");
 
-    run(listener, pool, configuration.admin).await?;
+    run(
+        listener,
+        pool,
+        configuration.admin,
+        configuration.application.subscribed,
+    )
+    .await?;
 
     Ok(())
 }

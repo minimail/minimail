@@ -41,5 +41,9 @@ pub async fn create_subscriber(
 ) -> Redirect {
     let mut store = PsqlSubscriberStore::from(data.pool);
     store.create(new_subscriber).await.unwrap();
-    Redirect::to(&origin.to_string())
+    let redirect_url = data
+        .subscribed
+        .redirect
+        .unwrap_or_else(|| origin.to_string());
+    Redirect::to(&redirect_url)
 }
