@@ -43,7 +43,7 @@ async fn subscribe_redirects_to_origin(pool: PgPool) {
 
     // Act
     let response = client
-        .post(&format!("{}/api/subscribers", &app.address))
+        .post(&format!("{}/api/subscribe", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .header("origin", &app.address)
         .body(body)
@@ -83,7 +83,7 @@ async fn subscribe_redirects_to_configured_redirect(pool: PgPool) {
 
     // Act
     let response = client
-        .post(&format!("{}/api/subscribers", &app.address))
+        .post(&format!("{}/api/subscribe", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .header("origin", &app.address)
         .body(body)
@@ -118,7 +118,7 @@ async fn subscribe_persists_email(pool: PgPool) {
 
     // Act
     client
-        .post(&format!("{}/api/subscribers", &app.address))
+        .post(&format!("{}/api/subscribe", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .header("origin", &app.address)
         .body(body)
@@ -152,7 +152,7 @@ async fn subscribe_lists_subscribers(pool: PgPool) {
 
     // Act
     client
-        .post(&format!("{}/api/subscribers", &app.address))
+        .post(&format!("{}/api/subscribe", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .header("origin", &app.address)
         .body(first_subscriber)
@@ -160,7 +160,7 @@ async fn subscribe_lists_subscribers(pool: PgPool) {
         .await
         .expect("Failed to execute request.");
     client
-        .post(&format!("{}/api/subscribers", &app.address))
+        .post(&format!("{}/api/subscribe", &app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .header("origin", &app.address)
         .body(second_subscriber)

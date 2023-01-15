@@ -12,7 +12,7 @@ use axum::{
 };
 use log::debug;
 
-pub async fn subscriber(
+pub async fn get_subscribers(
     State(data): State<ApplicationData>,
     TypedHeader(authorization): TypedHeader<Authorization<Bearer>>,
 ) -> Result<String, (StatusCode, String)> {
@@ -34,7 +34,7 @@ pub async fn subscriber(
     Ok(emails.join("\n"))
 }
 
-pub async fn create_subscriber(
+pub async fn subscribe(
     State(data): State<ApplicationData>,
     TypedHeader(origin): TypedHeader<Origin>,
     Form(new_subscriber): Form<NewSubscriber>,

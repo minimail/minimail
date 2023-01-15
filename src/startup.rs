@@ -19,8 +19,8 @@ pub async fn run(
 ) -> Result<()> {
     let app = Router::new()
         .route("/", get(|| async { "Minimail v0.1.0" }))
-        .route("/api/subscribers", get(routes::subscriber))
-        .route("/api/subscribers", post(routes::create_subscriber))
+        .route("/api/subscribers", get(routes::get_subscribers))
+        .route("/api/subscribe", post(routes::subscribe))
         .with_state(ApplicationData {
             admin,
             pool,
