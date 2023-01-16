@@ -1,3 +1,3 @@
 mod subscribers;
 
-pub use subscribers::{get_subscribers, subscribe};
+pub use subscribers::{delete, get_subscribers, subscribe};

@@ -5,7 +5,7 @@ use crate::{
 };
 use anyhow::Result;
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post},
     Router,
 };
 use sqlx::{Pool, Postgres};
@@ -20,6 +20,7 @@ pub async fn run(
     let app = Router::new()
         .route("/", get(|| async { "Minimail v0.1.0" }))
         .route("/api/subscribers", get(routes::get_subscribers))
+        .route("/api/subscribers", delete(routes::delete))
         .route("/api/subscribe", post(routes::subscribe))
         .with_state(ApplicationData {
             admin,
