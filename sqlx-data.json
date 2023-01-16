@@ -50,6 +50,18 @@
     },
     "query": "\n            INSERT INTO subscribers(email)\n            VALUES ($1)\n            ON CONFLICT (email) DO UPDATE SET email = EXCLUDED.email\n            RETURNING *\n            "
   },
+  "ce373291354fc51c82ca58084948c9a2a9ea2c9d86c8b14483eebefcb9d0f2da": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "DELETE FROM subscribers WHERE email = $1"
+  },
   "f2bada5ca417187bedaca9b21d65280eed94ee2b57943443afa90a759492162a": {
     "describe": {
       "columns": [
@@ -73,17 +85,5 @@
       }
     },
     "query": "SELECT * FROM subscribers"
-  },
-  "ff0d57050ae33f19202e5f7e2981ecd1e889a5eb76c141b988d8ad00516187f2": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Int4"
-        ]
-      }
-    },
-    "query": "DELETE FROM subscribers WHERE id = $1"
   }
 }

@@ -32,8 +32,9 @@ impl SubscriberStore for InMemorySubscriberStore {
         Ok(self.subscribers.values().cloned().collect())
     }
 
-    async fn delete(&mut self, id: i32) -> Result<()> {
-        self.subscribers.remove(&id);
+    async fn delete(&mut self, email: &Email) -> Result<()> {
+        self.subscribers
+            .retain(|_key, subscriber| subscriber.email.ne(email));
         Ok(())
     }
 }
@@ -97,8 +98,8 @@ mod tests {
             email: Email::from("test@email.com"),
         };
 
-        let subscriber = store.create(new_subscriber).await?;
-        store.delete(subscriber.id).await?;
+        store.create(new_subscriber).await?;
+        store.delete(&Email::from("test@email.com")).await?;
         let subscribers = store.all().await?;
 
         assert_eq!(0, subscribers.len());
