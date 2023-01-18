@@ -1,16 +1,19 @@
 use crate::{
     data::ApplicationData,
-    model::NewSubscriber,
+    model::{Email, NewSubscriber},
     store::{PsqlSubscriberStore, SubscriberStore},
 };
 use axum::{
-    extract::State,
+    extract::{Query, State},
     headers::{authorization::Bearer, Authorization, Origin},
     http::StatusCode,
-    response::Redirect,
+    response::{IntoResponse, Redirect},
     Form, TypedHeader,
 };
 use log::debug;
+use log::error;
+use log::info;
+use serde::Deserialize;
 
 pub async fn get_subscribers(
     State(data): State<ApplicationData>,
@@ -46,4 +49,34 @@ pub async fn subscribe(
         .redirect
         .unwrap_or_else(|| origin.to_string());
     Redirect::to(&redirect_url)
+}
+
+#[derive(Deserialize)]
+pub struct Delete {
+    email: Email,
+}
+
+pub async fn delete(
+    State(data): State<ApplicationData>,
+    query: Query<Delete>,
+    TypedHeader(authorization): TypedHeader<Authorization<Bearer>>,
+) -> impl IntoResponse {
+    let mut store = PsqlSubscriberStore::from(data.pool);
+
+    let authorized = data.admin.token.eq(authorization.0.token());
+
+    if !authorized {
+        return StatusCode::UNAUTHORIZED;
+    }
+
+    match store.delete(&query.0.email).await {
+        Ok(_) => {
+            info!("Deleted subscriber: {:?}", query.0.email);
+            StatusCode::OK
+        }
+        Err(e) => {
+            error!("Failed to delete subscriber: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        }
+    }
 }

@@ -233,3 +233,73 @@ async fn subscribe_with_invalid_auth_fails(pool: PgPool) {
     let response_text = response.text().await.expect("No text in body");
     assert_eq!(response_text, "Not authorized");
 }
+
+#[sqlx::test]
+async fn delete_removes_subscriber(pool: PgPool) {
+    // Arrange
+    let app = spawn_app(
+        pool,
+        AdminSettings {
+            token: "admin".to_string(),
+        },
+        SubscribedSettings::default(),
+    )
+    .await;
+    let client = reqwest::Client::new();
+
+    // Act
+    client
+        .post(&format!("{}/api/subscribe", &app.address))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .header("origin", &app.address)
+        .body("email=user%40email.com")
+        .send()
+        .await
+        .expect("Failed to execute request.");
+    let delete_request = client
+        .delete(&format!("{}/api/subscribers", &app.address))
+        .query(&[("email", "user@email.com")])
+        .bearer_auth("admin")
+        .send()
+        .await
+        .expect("Failed to execute request.");
+    let subscribers = client
+        .get(&format!("{}/api/subscribers", &app.address))
+        .bearer_auth("admin")
+        .send()
+        .await
+        .expect("Failed to execute request.")
+        .text()
+        .await
+        .expect("Failed to extract subscriber list from response.");
+
+    // Assert
+    assert!(delete_request.status().is_success());
+    assert_eq!(subscribers, "");
+}
+
+#[sqlx::test]
+async fn delete_with_invalid_auth_fails(pool: PgPool) {
+    // Arrange
+    let app = spawn_app(
+        pool,
+        AdminSettings {
+            token: "admin".to_string(),
+        },
+        SubscribedSettings::default(),
+    )
+    .await;
+    let client = reqwest::Client::new();
+
+    // Act
+    let response = client
+        .delete(&format!("{}/api/subscribers", &app.address))
+        .query(&[("email", "user@email.com")])
+        .bearer_auth("BAD_TOKEN")
+        .send()
+        .await
+        .expect("Failed to execute request.");
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 401);
+}

@@ -48,8 +48,8 @@ impl SubscriberStore for PsqlSubscriberStore {
             .collect())
     }
 
-    async fn delete(&mut self, id: i32) -> Result<()> {
-        sqlx::query!("DELETE FROM subscribers WHERE id = $1", id)
+    async fn delete(&mut self, email: &Email) -> Result<()> {
+        sqlx::query!("DELETE FROM subscribers WHERE email = $1", email.0)
             .execute(&self.pool)
             .await?;
         Ok(())
@@ -97,7 +97,7 @@ mod tests {
         };
 
         let subscriber = store.create(new_subscriber).await?;
-        store.delete(subscriber.id).await?;
+        store.delete(&Email::from("test@email.com")).await?;
 
         assert!(!store.all().await?.iter().any(|s| s.id == subscriber.id));
 
