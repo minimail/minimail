@@ -5,6 +5,7 @@ pub mod config;
 pub mod data;
 pub mod db;
 pub mod logging;
+pub mod mail;
 mod model;
 mod routes;
 pub mod startup;
