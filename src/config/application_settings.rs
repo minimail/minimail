@@ -14,7 +14,7 @@ pub struct ApplicationSettings {
 
 #[cfg(test)]
 mod tests {
-    use crate::config::{MailerSettings, SendGridSettings};
+    use crate::config::{MailerProvider, MailerSettings};
 
     use super::ApplicationSettings;
 
@@ -25,16 +25,18 @@ mod tests {
             host: localhost
             subscribed:
                 redirect: null
-            mailer: !SendGrid
+            mailer:
+                provider: SendGrid
                 token: sendgrid_token
         "#;
 
         let application_settings: ApplicationSettings = serde_yaml::from_str(serialized).unwrap();
         let mailer_settings = application_settings.mailer.unwrap();
         assert_eq!(
-            MailerSettings::SendGrid(SendGridSettings {
-                token: "sendgrid_token".to_string()
-            }),
+            MailerSettings {
+                token: "sendgrid_token".to_string(),
+                provider: MailerProvider::SendGrid
+            },
             mailer_settings
         );
     }
