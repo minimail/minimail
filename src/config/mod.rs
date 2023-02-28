@@ -2,6 +2,7 @@ mod admin_settings;
 mod application_settings;
 mod database_settings;
 mod environment;
+mod mailer_settings;
 mod settings;
 mod subscribed_settings;
 
@@ -11,6 +12,7 @@ pub use admin_settings::AdminSettings;
 pub use application_settings::ApplicationSettings;
 pub use database_settings::DatabaseSettings;
 use environment::Environment;
+pub use mailer_settings::{MailerProvider, MailerSettings};
 pub use settings::Settings;
 pub use subscribed_settings::SubscribedSettings;
 
